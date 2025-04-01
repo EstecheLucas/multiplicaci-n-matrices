@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+    <meta charset="UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Multiplicación de Matrices</title>
+
+        <style>
+
+        body { text-align: center; font-family: Arial, sans-serif; }
+
+        table { margin: auto; border-collapse: collapse; }
+        td, th { border: 1px solid black; padding: 10px; text-align: center; }
+
+       
+        input { width: 50px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- Título principal -->
+    <h1>Multiplicación de Matrices</h1>
+
+    <!-- Inputs para ingresar el número de filas y columnas -->
+    <label>Filas: <input type="number" id="filas" min="1"></label>
+    <label>Columnas: <input type="number" id="columnas" min="1"></label>
+
+    <!-- Botón para generar matrices aleatorias -->
+    <button onclick="generarMatrices()">Generar Matrices</button>
+
+    <!-- Contenedor donde se mostrarán las matrices -->
+    <div id="matrices"></div>
+
+    <!-- Botón para multiplicar las matrices -->
+    <button onclick="multiplicarMatrices()">Multiplicar</button>
+
+    <!-- Sección donde se mostrará el resultado -->
+    <h2>Matriz Resultado</h2>
+    <div id="resultado"></div>
+
+    <script>
+        // Función para generar matrices con valores aleatorios
+        function generarMatrices() {
+            // Obtiene el número de filas y columnas ingresadas por el usuario
+            let filas = document.getElementById("filas").value;
+            let columnas = document.getElementById("columnas").value;
+
+            // Selecciona el div donde se mostrarán las matrices
+            let matricesDiv = document.getElementById("matrices");
+            matricesDiv.innerHTML = ""; // Limpia el contenido anterior
+
+            // Verifica que las dimensiones sean mayores a 0
+            if (filas < 1 || columnas < 1) {
+                alert("Las dimensiones deben ser mayores a 0.");
+                return; // Sale de la función si hay un error
+            }
+
+            // Variables que almacenarán el código HTML de las dos matrices
+            let tabla1 = "<h3>Matriz 1</h3><table>";
+            let tabla2 = "<h3>Matriz 2</h3><table>";
+
+            // Genera las tablas con los valores aleatorios
+            for (let i = 0; i < filas; i++) {
+                tabla1 += "<tr>";
+                tabla2 += "<tr>";
+                for (let j = 0; j < columnas; j++) {
+                    // Crea un input dentro de cada celda con un valor aleatorio entre 0 y 9
+                    tabla1 += `<td><input type="number" id="m1-${i}-${j}" value="${Math.floor(Math.random() * 10)}"></td>`;
+                    tabla2 += `<td><input type="number" id="m2-${i}-${j}" value="${Math.floor(Math.random() * 10)}"></td>`;
+                }
+                tabla1 += "</tr>";
+                tabla2 += "</tr>";
+            }
+            tabla1 += "</table>";
+            tabla2 += "</table>";
+
+            // Inserta las tablas en el div
+            matricesDiv.innerHTML = tabla1 + tabla2;
+        }
+
+        // Función para multiplicar las matrices
+        function multiplicarMatrices() {
+            // Obtiene el número de filas y columnas ingresadas
+            let filas = document.getElementById("filas").value;
+            let columnas = document.getElementById("columnas").value;
+
+            // Inicializa los arrays para almacenar las matrices
+            let matriz1 = [];
+            let matriz2 = [];
+
+            // Recorre los inputs y guarda los valores en los arrays
+            for (let i = 0; i < filas; i++) {
+                let fila1 = [], fila2 = [];
+                for (let j = 0; j < columnas; j++) {
+                    // Obtiene los valores de los inputs y los convierte a números
+                    fila1.push(parseInt(document.getElementById(`m1-${i}-${j}`).value));
+                    fila2.push(parseInt(document.getElementById(`m2-${i}-${j}`).value));
+                }
+                // Agrega las filas a las matrices
+                matriz1.push(fila1);
+                matriz2.push(fila2);
+            }
+
+            // Enviar los datos al servidor usando fetch
+            fetch('/multiplicar', {
+                method: 'POST', // Método HTTP
+                headers: { 'Content-Type': 'application/json' }, // Tipo de contenido JSON
+                body: JSON.stringify({ matriz1, matriz2 }) // Convierte las matrices en JSON
+            })
+            .then(response => response.json()) // Convierte la respuesta del servidor en JSON
+            .then(data => {
+                // Selecciona el div donde se mostrará el resultado
+                let resultadoDiv = document.getElementById("resultado");
+
+                // Si el servidor devuelve un error, lo muestra en rojo
+                if (data.error) {
+                    resultadoDiv.innerHTML = `<p style="color:red">${data.error}</p>`;
+                } else {
+                    // Si la operación fue exitosa, crea una tabla para mostrar la matriz resultado
+                    let tabla = "<table>";
+                    data.resultado.forEach(fila => {
+                        tabla += "<tr>";
+                        fila.forEach(valor => tabla += `<td>${valor}</td>`); // Agrega cada valor en una celda
+                        tabla += "</tr>";
+                    });
+                    tabla += "</table>";
+                    resultadoDiv.innerHTML = tabla; // Inserta la tabla en la página
+                }
+            })
+            .catch(error => console.error("Error:", error)); // Captura errores en la petición
+        }
+    </script>
+
+</body>
+</html>
